@@ -1,11 +1,14 @@
 #include "menu.h"
 
+Menu *Menu::instance = nullptr;
+
 Menu::Menu(uint8_t p_p, uint8_t s_p, uint8_t n_p, Settings *s, Buzzer *b, RX5808 *r, Api *a)
-  : menuIndex(MAIN),
+  : menuIndex(SCAN),
     previous_pin(p_p), select_pin(s_p), next_pin(n_p),
     selectButtonPressTime(0), selectButtonHeld(false),
     settings(s), buzzer(b), module(r), api(a),
     u8g2(U8G2_R0, U8X8_PIN_NONE) {
+  instance = this; // Set the static instance pointer
 }
 
 // Begin menu object
@@ -19,23 +22,60 @@ void Menu::begin() {
 
   u8g2.begin();
   u8g2.clearBuffer();
+
+  #ifdef ROTARY_SWITCH
+    dial_pos = 32768;
+    last_dial_pos = 32768;
+    attachInterrupt(previous_pin, Menu::encoderWrapper, CHANGE);
+  #endif
+}
+
+void Menu::encoderWrapper() {
+  if (instance) {
+    instance->doEncoder();
+  }
+}
+
+void Menu::doEncoder(){
+  bool encA = digitalRead(previous_pin);
+  bool encB = digitalRead(next_pin);
+
+  if (encA == 0){
+    if (encB == 1 && encoder_state == 2) {
+      encoder_state = 0;
+      dial_pos -= 1;
+    }
+    else if (encB == 0 && encoder_state == 1){
+      encoder_state = 0;
+      dial_pos += 1;
+    }
+  } else {
+    if (encB == 1) encoder_state = 1;
+    else encoder_state = 2;
+  }
 }
 
 // Handle navigation between menus
 // Manipulates the internal menuIndex variable
 void Menu::handleButtons() {
-  // Check menu button presses
-  int prevPressed = digitalRead(previous_pin);
-  int selectPressed = digitalRead(select_pin);
-  int nextPressed = digitalRead(next_pin);
-
-  // Hidden reset function
-  if (prevPressed == HIGH && selectPressed == HIGH && nextPressed == HIGH) {
-    settings->clearReset();
-  }
-
   // Update length of scan menu
   menus[SCAN].menuItemsLength = (SCAN_FREQUENCY_RANGE / settings->scanInterval.get()) + 1;  // +1 for final number inclusion
+  
+  #ifdef ROTARY_SWITCH
+    int selectPressed = !digitalRead(select_pin);
+    if (dial_pos != last_dial_pos) {
+      menus[menuIndex].menuIndex = (menus[menuIndex].menuIndex + (last_dial_pos - dial_pos) + menus[menuIndex].menuItemsLength) % menus[menuIndex].menuItemsLength;
+      last_dial_pos = dial_pos;
+    } 
+  #else
+    int selectPressed = digitalRead(select_pin);
+    int nextPressed = digitalRead(previous_pin);
+    int nextPressed = digitalRead(next_pin);
+
+    // Hidden reset function
+    if (prevPressed == HIGH && selectPressed == HIGH && nextPressed == HIGH) {
+      settings->clearReset();
+    }
 
   // Move between menu items
   if (nextPressed == HIGH || prevPressed == HIGH) {
@@ -48,6 +88,7 @@ void Menu::handleButtons() {
     // Delay for button debouncing
     delay(DEBOUNCE_DELAY);
   }
+  #endif
 
   // Handle pressing and holding SELECT to go back
   if (selectPressed == HIGH) {
@@ -223,8 +264,9 @@ void Menu::drawSelectionMenu() {
 
 // Draw graph of scanned rssi values
 void Menu::drawScanMenu() {
+
   // Calculate number of scanned values based off of interval
-  int interval = settings->scanInterval.get();
+  float interval = settings->scanInterval.get();
   int numScannedValues = (SCAN_FREQUENCY_RANGE / interval) + 1;  // +1 for final number inclusion
 
   // Calculate width of each bar in graph by expanding until best fit
@@ -234,7 +276,7 @@ void Menu::drawScanMenu() {
   }
 
   // Calculate side padding offset for graph
-  int padding = (DISPLAY_WIDTH - (barWidth * numScannedValues)) / 2;
+  int padding = (int)floor((DISPLAY_WIDTH - (barWidth * numScannedValues)) / 2);
 
   // Get min and max calibrated rssi
   int minRssi = settings->lowCalibratedRssi.get();
@@ -263,7 +305,7 @@ void Menu::drawScanMenu() {
   // Draw selected frequency
   char currentFrequency[8];
   int min_freq = module->lowband.get() ? LOWBAND_MIN_FREQUENCY : HIGHBAND_MIN_FREQUENCY;
-  snprintf(currentFrequency, sizeof(currentFrequency), "%dMHz", menus[SCAN].menuIndex * interval + min_freq);
+  snprintf(currentFrequency, sizeof(currentFrequency), "%dMHz", (int)round(menus[SCAN].menuIndex * interval + min_freq));
   u8g2.drawStr(xTextCentre(currentFrequency, 7), 13, currentFrequency);
 
   // Safely get current rssi
@@ -372,9 +414,9 @@ void Menu::initMenus() {
   settingsMenuItems[2] = { "Bat. alarm", bitmap_Alarm };
 
   // Scan Interval menu
-  scanIntervalMenuItems[0] = { "5MHz", bitmap_Blank };
-  scanIntervalMenuItems[1] = { "10MHz", bitmap_Blank };
-  scanIntervalMenuItems[2] = { "20MHz", bitmap_Blank };
+  scanIntervalMenuItems[0] = { "2.5MHz", bitmap_Blank };
+  scanIntervalMenuItems[1] = { "5MHz", bitmap_Blank };
+  scanIntervalMenuItems[2] = { "10MHz", bitmap_Blank };
 
   // Buzzer menu
   buzzerMenuItems[0] = { "On", bitmap_Blank };

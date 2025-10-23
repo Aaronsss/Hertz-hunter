@@ -64,8 +64,9 @@ void loop() {
   menu.drawMenu();
 
   // Draw battery voltage
-  menu.drawBatteryVoltage(battery.currentVoltage.get());
+  //menu.drawBatteryVoltage(battery.currentVoltage.get());
 
   // Send display buffer
   menu.sendBuffer();
+  
 }

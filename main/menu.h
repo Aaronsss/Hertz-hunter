@@ -17,6 +17,7 @@
 #define DEBOUNCE_DELAY 150
 
 #define ROTARY_SWITCH
+#define CHANNEL_NAMES
 
 // How long button has to be held to be long-pressed
 #define LONG_PRESS_DURATION (500 - DEBOUNCE_DELAY)

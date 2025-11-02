@@ -293,10 +293,13 @@ void Menu::drawScanMenu() {
     u8g2.drawStr(4, DISPLAY_HEIGHT, "R1");
     u8g2.drawStr(19, DISPLAY_HEIGHT, "R2");
     u8g2.drawStr(34, DISPLAY_HEIGHT, "R3");
-    u8g2.drawStr(45, DISPLAY_HEIGHT, "F2");
-    //u8g2.drawStr(50, DISPLAY_HEIGHT, "R4");
-    u8g2.drawStr(61, DISPLAY_HEIGHT, "F4");
-    //u8g2.drawStr(64, DISPLAY_HEIGHT, "R5");
+    #ifdef RACEBAND_CHANNELS
+      u8g2.drawStr(50, DISPLAY_HEIGHT, "R4");
+      u8g2.drawStr(64, DISPLAY_HEIGHT, "R5");
+    #else
+      u8g2.drawStr(45, DISPLAY_HEIGHT, "F2");
+      u8g2.drawStr(61, DISPLAY_HEIGHT, "F4");
+    #endif
     u8g2.drawStr(78, DISPLAY_HEIGHT, "R6");
     u8g2.drawStr(93, DISPLAY_HEIGHT, "R7");
     u8g2.drawStr(108, DISPLAY_HEIGHT, "R8");

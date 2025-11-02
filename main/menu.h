@@ -16,8 +16,9 @@
 
 #define DEBOUNCE_DELAY 150
 
-// Uncomment to use a rotary encoder switch
-//#define ROTARY_SWITCH
+#define ROTARY_SWITCH // Use a rotary encoder dial instead of push buttons to control the scanner
+#define CHANNEL_NAMES // display channel names instead of frequencies
+//#define RACEBAND_CHANNELS // Show raceband channels instead of frequency (requires CHANNEL_NAMES to be defined for this to work)
 
 // How long button has to be held to be long-pressed
 #define LONG_PRESS_DURATION (500 - DEBOUNCE_DELAY)

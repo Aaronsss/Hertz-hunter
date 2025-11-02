@@ -287,6 +287,27 @@ void Menu::drawScanMenu() {
 
   // Draw bottom numbers
   u8g2.setFont(u8g2_font_5x7_tf);
+  #ifdef CHANNEL_NAMES
+    if (module->lowband.get()) {
+    u8g2.drawStr(0, DISPLAY_HEIGHT, "5345");
+    u8g2.drawStr(55, DISPLAY_HEIGHT, "5495");
+    u8g2.drawStr(109, DISPLAY_HEIGHT, "5645");
+  } else {
+    u8g2.drawStr(4, DISPLAY_HEIGHT, "R1");
+    u8g2.drawStr(19, DISPLAY_HEIGHT, "R2");
+    u8g2.drawStr(34, DISPLAY_HEIGHT, "R3");
+    #ifdef RACEBAND_CHANNELS
+      u8g2.drawStr(50, DISPLAY_HEIGHT, "R4");
+      u8g2.drawStr(64, DISPLAY_HEIGHT, "R5");
+    #else
+      u8g2.drawStr(45, DISPLAY_HEIGHT, "F2");
+      u8g2.drawStr(61, DISPLAY_HEIGHT, "F4");
+    #endif
+    u8g2.drawStr(78, DISPLAY_HEIGHT, "R6");
+    u8g2.drawStr(93, DISPLAY_HEIGHT, "R7");
+    u8g2.drawStr(108, DISPLAY_HEIGHT, "R8");
+  }
+  #else
   if (module->lowband.get()) {
     u8g2.drawStr(0, DISPLAY_HEIGHT, "5345");
     u8g2.drawStr(55, DISPLAY_HEIGHT, "5495");
@@ -296,6 +317,7 @@ void Menu::drawScanMenu() {
     u8g2.drawStr(55, DISPLAY_HEIGHT, "5795");
     u8g2.drawStr(109, DISPLAY_HEIGHT, "5945");
   }
+  #endif
 
   // Draw high or low band
   u8g2.setFont(u8g2_font_7x13_tf);
